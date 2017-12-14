@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 
+from __future__ import division
+from __future__ import print_function
 import os
 import pcbnew
 
-# TODO how to run this offline too?
+from kicad_util import *
+
+
+# TODO set up to run offline too
 
 class HolePlugin(pcbnew.ActionPlugin):
     def defaults(self):
@@ -51,14 +56,23 @@ class HolePlugin(pcbnew.ActionPlugin):
         # TODO option to make new hole components and put in project specific library
 
         # TODO include field for library to be saved to (maybe mandatory if this option?)
+        # TODO fail gracefully if board filename is empty (board not saved yet)
         target_footprint_lib = '.'.join(str(board.GetFileName()).split('.')[-1] \
             + ['.pretty'])
+
         if not os.path.exists(target_footprint_lib):
+            print('creating project specific footprint library' + \
+                ' {}'.format(target_footprint_lib))
             pcbnew.PCB_IO().FootprintLibCreate(target_footprint_lib)
+        else:
+            print('using footprint library {}'.format(target_footprint_lib))
 
         # make a new footprint for each distinct hole radius we need
         # save to project specific library by default
         for r in radii:
+            r_mm = nm_to_mm(r)
+            print('generating footprint for hole of radius {}mm'.format(r_mm))
+
             footprint = pcbnew.MODULE(None)
             # TODO set tags to include non-plated through hole, npth?
             #footprint.SetDescription('{}mm diameter non-plated through hole')
@@ -80,35 +94,34 @@ class HolePlugin(pcbnew.ActionPlugin):
             # TODO what is attr virtual and why do all library M2s holes have them?
             # TODO are holes alone actually rendered, or do you need the other stuff?
 
+            # there seems to be a PAD_DRILL_SHAPE_CIRCLE and PAD_DRILL_SHAPE_OBLONG
+            # but when are they ever not circular? oblong = limited routing?
+            # would advanced circuits do oblong, for instance?
             #pad.SetDrillShape() # huh???
             pad.SetDrillSize(pcbnew.wxSize(r))
 
-            ''' copied from electrode_vertices.py
-            # TODO name according to input parameters
-            # (would require this function to have knowledge of generating parameters)
-            #module_id = os.path.split(filename)[-1][:(-1)*len('.kicad_mod')]
-            # what is reference used for exactly?
-            #footprint.SetReference(module_id)
+            footprint_id = 'R{}mm_NPTH'.format(r_mm)
+            footprint.SetReference(footprint_id)
 
-            # TODO not clear on why both setpos0 and setposition are called
-            # in FootprintWizardBase.py
-            footprint.Reference().SetPosition(pcbnew.wxPoint(int(round(0.6 * min(all_xs))), \
-                int(round(1.1 * min(all_ys)))))
-            footprint.Value().SetPosition(pcbnew.wxPoint(int(round(0.6 * max(all_xs))), \
-                int(round(1.1 * min(all_ys)))))
+            '''
+            footprint.Reference().SetPosition(pcbnew.wxPoint()1)
+            footprint.Value().SetPosition(pcbnew.wxPoint()1)
+            '''
 
             # aiming for a visible layer that does not translate into manufacture
             comment_layer_id = get_layer_id_by_name('Cmts.User')
             footprint.Reference().SetLayer(comment_layer_id)
             footprint.Value().SetLayer(comment_layer_id)
 
-            fpid = pcbnew.LIB_ID(module_id)
+            # this is the filename, preceeding .kicad_mod
+            fpid = pcbnew.LIB_ID(footprint_id)
             footprint.SetFPID(fpid)
-            '''
+
             # TODO here or need to do individually?
             footprint.SetLocked(True)
 
-            # TODO name? fpid?
+            print('saving footprint to {}'.format(os.path.join(\
+                target_footprint_lib, footprint_id + '.kicad_mod'))
             pcbnew.PCB_IO().FootprintSave(target_footprint_lib, footprint)
 
             f = pcbnew.PCB_IO().FootprintLoad(target_footprint_lib, fpid)
@@ -116,10 +129,12 @@ class HolePlugin(pcbnew.ActionPlugin):
                 if r == r_curr:
                     # TODO what works here? clone? duplicate seems wrong
                     f_new = f.Clone()
-                    # TODO duplicate / make new pad. see make_board?
-                    pad.SetCenter(pcbnew.wxPoint(c.x, c,y))
+                    # TODO maybe setposition?
+                    f_new.SetCenter(pcbnew.wxPoint(c.x, c,y))
                     # TODO everything set right?
                     board.AddNative(f_new)
+
+                    # TODO optionally delete existing hole outlines
 
         # TODO make library if necessary (?) (way to check for existing project specific library?)
         # or clean way to add a library? (rather than manually editing the files to add lines)
