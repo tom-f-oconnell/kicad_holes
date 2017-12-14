@@ -133,7 +133,7 @@ class HolePlugin(pcbnew.ActionPlugin):
             fpid = pcbnew.LIB_ID(footprint_id)
             footprint.SetFPID(fpid)
 
-            # TODO here or need to do individually?
+            # seems to work to lock all imports by default
             footprint.SetLocked(True)
 
             print('saving footprint to {}'.format(os.path.join(\
@@ -154,6 +154,7 @@ class HolePlugin(pcbnew.ActionPlugin):
         # TODO redraw / refresh / updateuserinterface?
         # these together didn't work, and might have unmarked as modified
         # (couldn't save directly)
+        # actually that seems to be happening anyway
         #pcbnew.UpdateUserInterface()
         #pcbnew.Refresh()
 
