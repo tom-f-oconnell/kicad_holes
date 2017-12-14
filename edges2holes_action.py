@@ -18,6 +18,7 @@ class HolePlugin(pcbnew.ActionPlugin):
         """
         board = pcbnew.GetBoard()
 
+        circles = []
         # get circles drawn on board
         # TODO maybe include some means of filtering out possible circular board outline
         drawing_list = board.DrawingsList()
@@ -30,6 +31,11 @@ class HolePlugin(pcbnew.ActionPlugin):
                     # TODO check these are what i want, and don't need modification
                     # w/ thickness or whatever (check using dxf import)
                     radius = d.GetRadius()
+
+                    
+
+        # TODO also aggregate and bin by optional attributes, like tolerances
+        radii = set()
        
         # TODO option to use nearest hole in existing library option / next largest
         # (report error)
