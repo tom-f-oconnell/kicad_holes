@@ -1,5 +1,10 @@
 ## kicad_holes
-KiCad script to convert circles in Edge.Cuts layer to non-plated through-holes.
+KiCAD script to convert circles in Edge.Cuts layer to non-plated through-holes.
+
+**It seems this is generally not necessary**, but this may still be useful under some circumstances, or at least to serve as an example of some of the potential of the KiCAD scripting API.
+
+I was once unclear whether Advanced Circuits (through 33each service, presumably BareBones and 66each are similar), would do any internal cuts not speficied in one of the drill files. It seems from my first order of my shock delivery shield, however, that they will cut these holes for you.
+
 
 ### Installation
 ```
@@ -22,3 +27,7 @@ This script currently saves the footprints in a folder called `<prefix>.pretty`,
 `<prefix>.kicad_pcb` is the name of the board file.
 
 Circles on Edge.Cuts will be deleted.
+
+### TODO 
+
+Pull in `kicad_util.py` functions.
